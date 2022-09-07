@@ -13,9 +13,12 @@ ifndef OBJDIR
     OBJDIR=obj
 endif
 
+ifndef BINDIR
+    BINDIR=bin
+endif
+
 ifndef CXXFLAGS
-    CXXFLAGS=-std=c++14 -g  \
-                -Wall -Wno-sign-compare -Wno-unknown-pragmas -Wno-reorder -I${PWD}
+    CXXFLAGS=-std=c++14 -g -Wall -Werror -I${PWD}
 endif
 
 # Lib: multi-thread; boost
@@ -34,14 +37,18 @@ LIBRULESOBJ     =       $(OBJDIR)/Rules.o \
 LIBFORMATOBJ    =       $(OBJDIR)/Format.o \
 
 # Binary
-cppFormat: $(LIBDATABASEOBJ) $(LIBCONFIGOBJ) $(LIBRULESOBJ) $(LIBFORMATOBJ)
-	$(CXX) $(CXXFLAGS) -o cppFormat \
+cppFormat: mkbindir $(LIBDATABASEOBJ) $(LIBCONFIGOBJ) $(LIBRULESOBJ) $(LIBFORMATOBJ)
+	$(CXX) $(CXXFLAGS) -o $(BINDIR)/cppFormat \
            $(LIBDATABASEOBJ) $(LIBCONFIGOBJ) $(LIBRULESOBJ) $(LIBFORMATOBJ) \
            $(LIBS)
 
-# Object files 
+# Object dir
 mkobjdir  :
 	mkdir -p $(OBJDIR)
+
+# Binary dir
+mkbindir  :
+	mkdir -p $(BINDIR)
 
 $(OBJDIR)/OptionParser.o : mkobjdir libConfig/private/OptionParser.cc   libConfig/private/OptionParser.hh
 	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/OptionParser.o libConfig/private/OptionParser.cc
@@ -63,4 +70,4 @@ $(OBJDIR)/Format.o : mkobjdir libFormat/private/Format.cc libFormat/public/Forma
 
 # Clean
 clean:
-	rm -rf ${OBJDIR} cppFormat
+	rm -rf ${OBJDIR} ${BINDIR}
