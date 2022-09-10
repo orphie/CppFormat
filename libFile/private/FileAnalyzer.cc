@@ -16,9 +16,9 @@ public:
 public:
     void run(const ConfigDb&);
 private:
+    void revertPatch();
     void analyzeDiffFile(const ConfigDb&);
     void analyzeSrcFiles(const ConfigDb&);
-
 private:
     FileDb&     _file;
 };
@@ -26,8 +26,13 @@ private:
 void FileAnalyzer::FileAnalyzerImpl::run(const ConfigDb& config)
 {
     analyzeDiffFile(config);
+    revertPatch();
+
     analyzeSrcFiles(config);
 }
+
+void FileAnalyzer::FileAnalyzerImpl::revertPatch()
+{}
 
 void FileAnalyzer::FileAnalyzerImpl::analyzeSrcFiles(const ConfigDb& config)
 {}
@@ -50,39 +55,46 @@ void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const ConfigDb& config)
             separator sep{" ", "\t"};
             tokenizer tok{line, sep};
             std::string curFileName = *(++tok.begin());
-            std::cout   << "Found new File: " << curFileName << endl; 
-            //_file.addFileDiff(curFileName);
+            std::cout   << "Found Orig File: " << curFileName << endl; 
+            _file.addFileDiffMinus(curFileName);
             continue;
         }
-
+        if (boost::starts_with(line, "+++")) {
+            separator sep{" ", "\t"};
+            tokenizer tok{line, sep};
+            std::string curFileName = *(++tok.begin());
+            std::cout   << "Found New File: " << curFileName << endl; 
+            _file.addFileDiffPlus(curFileName);
+            continue;
+        }
         if (boost::starts_with(line, "@@")) {
             separator sep{" "};
             tokenizer tok{line, sep};
-            std::string origLineNum = *(++tok.begin());
-            assert(origLineNum[0] == '-');
-            origLineNum = origLineNum.substr(1);
+            std::string newLineNum = *(++tok.begin());
+            assert(newLineNum[0] == '-');
+            newLineNum = newLineNum.substr(1);
             
             separator sepLineNum{","};
-            tokenizer tokLineNum{origLineNum, sepLineNum};
+            tokenizer tokLineNum{newLineNum, sepLineNum};
             std::string lineNumStr = *tokLineNum.begin();
             size_t lineNum = boost::lexical_cast<size_t>(lineNumStr);
             std::cout   << "Found new Parag begin at line " << lineNum << endl; 
-            //_file.addFileDiffParag(lineNum);
+            _file.addParagDiff(lineNum);
             continue;
         }
 
         if (boost::starts_with(line, "-")) {
-            //_file.addFileDiffLine(line, MINUS);
+            _file.addLineDiff(line, FileDb::DiffLineType::MINUS);
             continue;
         }
 
         if (boost::starts_with(line, "+")) {
-            //_file.addFileDiffLine(line, ADD);
+            _file.addLineDiff(line, FileDb::DiffLineType::PLUS);
             continue;
         }
 
         if (boost::starts_with(line, " ")) {
-            //_file.addFileDiffLine(line, NOCHANGE);
+            _file.addLineDiff(line, FileDb::DiffLineType::NOCHANGE);
             continue;
         }
         // diff file type unrecognized 
@@ -102,5 +114,4 @@ FileAnalyzer::run(const ConfigDb& config)
     return _pImpl->run(config);
 }
 // END: class FileAnalyzer
-
 
