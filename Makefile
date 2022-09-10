@@ -26,20 +26,27 @@ LIBS+=-lpthread -L/usr/lib/x86_64-linux-gnu/ -lboost_program_options
 
 
 # Directories
-LIBDATABASEOBJ  =       $(OBJDIR)/Main.o \
-                        $(OBJDIR)/FormatDb.o  \
+LIBFLOWOBJ      =       $(OBJDIR)/Main.o \
 
-LIBCONFIGOBJ    =       $(OBJDIR)/Config.o \
-                        $(OBJDIR)/OptionParser.o
+LIBCONFIGOBJ    =       $(OBJDIR)/ConfigDb.o \
+                        $(OBJDIR)/ConfigAnalyzer.o
 
-LIBRULESOBJ     =       $(OBJDIR)/Rules.o \
+LIBRULEOBJ      =       $(OBJDIR)/RuleDb.o \
+                        $(OBJDIR)/RuleAnalyzer.o
+
+LIBFILEOBJ      =       $(OBJDIR)/FileDb.o \
+                        $(OBJDIR)/FileAnalyzer.o
 
 LIBFORMATOBJ    =       $(OBJDIR)/Format.o \
 
+LIBUTILSOBJ     =       $(OBJDIR)/Timer.o \
+
+LIBFLOWOBJ      =       $(OBJDIR)/Main.o \
+
 # Binary
-cppFormat: mkbindir $(LIBDATABASEOBJ) $(LIBCONFIGOBJ) $(LIBRULESOBJ) $(LIBFORMATOBJ)
+cppFormat: mkbindir $(LIBFLOWOBJ) $(LIBCONFIGOBJ) $(LIBFILEOBJ) $(LIBRULEOBJ) $(LIBFORMATOBJ) $(LIBUTILSOBJ) $(LIBFLOWOBJ)
 	$(CXX) $(CXXFLAGS) -o $(BINDIR)/cppFormat \
-           $(LIBDATABASEOBJ) $(LIBCONFIGOBJ) $(LIBRULESOBJ) $(LIBFORMATOBJ) \
+           $(LIBDATABASEOBJ) $(LIBCONFIGOBJ) $(LIBFILEOBJ) $(LIBRULEOBJ) $(LIBFORMATOBJ) $(LIBUTILSOBJ) $(LIBFLOWOBJ)\
            $(LIBS)
 
 # Object dir
@@ -50,23 +57,32 @@ mkobjdir  :
 mkbindir  :
 	mkdir -p $(BINDIR)
 
-$(OBJDIR)/OptionParser.o : mkobjdir libConfig/private/OptionParser.cc   libConfig/private/OptionParser.hh
-	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/OptionParser.o libConfig/private/OptionParser.cc
+$(OBJDIR)/Timer.o : mkobjdir libUtils/private/Timer.cc libUtils/public/Timer.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/Timer.o libUtils/private/Timer.cc
 
-$(OBJDIR)/Config.o : mkobjdir libConfig/private/Config.cc   libConfig/public/Config.hh
-	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/Config.o libConfig/private/Config.cc
+$(OBJDIR)/ConfigDb.o : mkobjdir libConfig/private/ConfigDb.cc   libConfig/public/ConfigDb.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/ConfigDb.o libConfig/private/ConfigDb.cc
 
-$(OBJDIR)/Main.o : mkobjdir libDatabase/private/Main.cc libDatabase/public/FormatDb.hh
-	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/Main.o libDatabase/private/Main.cc
+$(OBJDIR)/ConfigAnalyzer.o : mkobjdir libConfig/private/ConfigAnalyzer.cc   libConfig/public/ConfigAnalyzer.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/ConfigAnalyzer.o libConfig/private/ConfigAnalyzer.cc
 
-$(OBJDIR)/FormatDb.o : mkobjdir libDatabase/private/FormatDb.cc   libDatabase/public/FormatDb.hh libConfig/public/Config.hh
-	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/FormatDb.o libDatabase/private/FormatDb.cc
+$(OBJDIR)/RuleDb.o : mkobjdir libRule/private/RuleDb.cc libRule/public/RuleDb.hh libConfig/public/ConfigDb.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/RuleDb.o libRule/private/RuleDb.cc
 
-$(OBJDIR)/Rules.o : mkobjdir libRules/private/Rules.cc libRules/public/Rules.hh libConfig/public/Config.hh
-	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/Rules.o libRules/private/Rules.cc
+$(OBJDIR)/RuleAnalyzer.o : mkobjdir libRule/private/RuleAnalyzer.cc   libRule/public/RuleAnalyzer.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/RuleAnalyzer.o libRule/private/RuleAnalyzer.cc
 
-$(OBJDIR)/Format.o : mkobjdir libFormat/private/Format.cc libFormat/public/Format.hh libConfig/public/Config.hh libRules/public/Rules.hh
+$(OBJDIR)/FileDb.o : mkobjdir libFile/private/FileDb.cc libFile/public/FileDb.hh libConfig/public/ConfigDb.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/FileDb.o libFile/private/FileDb.cc
+
+$(OBJDIR)/FileAnalyzer.o : mkobjdir libFile/private/FileAnalyzer.cc   libFile/public/FileAnalyzer.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/FileAnalyzer.o libFile/private/FileAnalyzer.cc
+
+$(OBJDIR)/Format.o : mkobjdir libFormat/private/Format.cc libFormat/public/Format.hh libConfig/public/ConfigDb.hh libRule/public/RuleDb.hh
 	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/Format.o libFormat/private/Format.cc
+
+$(OBJDIR)/Main.o : mkobjdir libFlow/private/Main.cc
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/Main.o libFlow/private/Main.cc
 
 # Clean
 clean:

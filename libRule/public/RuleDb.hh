@@ -2,14 +2,14 @@
 
 #include <memory>   // for std::unique_ptr
 class Config;
-class Rules {
+class RuleDb {
 public:
-    Rules();
-    ~Rules();
+    RuleDb();
+    ~RuleDb();
 public:
     int run(const Config&);
 private:
-    class RulesImpl;
-    std::unique_ptr<RulesImpl> _pImpl;
+    class RuleDbImpl;
+    std::unique_ptr<RuleDbImpl> _pImpl;
 };
 

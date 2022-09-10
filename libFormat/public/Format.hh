@@ -1,14 +1,15 @@
 #pragma once
 
 #include <memory>   // for std::unique_ptr
-class Config;
-class Rules;
+class ConfigDb;
+class FileDb;
+class RuleDb;
 class Format {
 public:
-    Format();
+    Format(const ConfigDb&, const RuleDb&, const FileDb&);
     ~Format();
 public:
-    int run(const Config&, const Rules&);
+    int run();
 private:
     class FormatImpl;
     std::unique_ptr<FormatImpl> _pImpl;
