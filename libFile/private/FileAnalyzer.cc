@@ -12,33 +12,35 @@ using namespace std;
 class FileAnalyzer::FileAnalyzerImpl {
 public:
     using Base      =   FileAnalyzer;
-    FileAnalyzerImpl(FileDb& file)    :   _file(file) {}
+    FileAnalyzerImpl(FileDb& file)    :   _fileDb(file) {}
 public:
     void run(const ConfigDb&);
 private:
+    void processDiffFile(const ConfigDb&);
+    void analyzeDiffFile(const std::string&);
     void revertPatch();
-    void analyzeDiffFile(const ConfigDb&);
     void analyzeSrcFiles(const ConfigDb&);
 private:
-    FileDb&     _file;
+    FileDb&     _fileDb;
 };
 
 void FileAnalyzer::FileAnalyzerImpl::run(const ConfigDb& config)
 {
-    analyzeDiffFile(config);
-    revertPatch();
-
+    processDiffFile(config);
     analyzeSrcFiles(config);
 }
 
 void FileAnalyzer::FileAnalyzerImpl::revertPatch()
-{}
+{
+    // create a new file "*.revert"
+    //_fileDb
+}
 
 void FileAnalyzer::FileAnalyzerImpl::analyzeSrcFiles(const ConfigDb& config)
 {}
 
 
-void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const ConfigDb& config)
+void FileAnalyzer::FileAnalyzerImpl::processDiffFile(const ConfigDb& config)
 {
     if (!config.hasDiffFile()) {
         return;
@@ -46,6 +48,12 @@ void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const ConfigDb& config)
 
     // diff file specified, break to parag
     std::string diffFileName = config.getDiffFileName();
+    analyzeDiffFile(diffFileName);
+    revertPatch();
+}
+
+void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const std::string& diffFileName)
+{
     ifstream infile(diffFileName);
 
     using separator = boost::char_separator<char>;
@@ -56,7 +64,7 @@ void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const ConfigDb& config)
             tokenizer tok{line, sep};
             std::string curFileName = *(++tok.begin());
             std::cout   << "Found Orig File: " << curFileName << endl; 
-            _file.addFileDiffMinus(curFileName);
+            _fileDb.addFileDiffMinus(curFileName);
             continue;
         }
         if (boost::starts_with(line, "+++")) {
@@ -64,7 +72,7 @@ void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const ConfigDb& config)
             tokenizer tok{line, sep};
             std::string curFileName = *(++tok.begin());
             std::cout   << "Found New File: " << curFileName << endl; 
-            _file.addFileDiffPlus(curFileName);
+            _fileDb.addFileDiffPlus(curFileName);
             continue;
         }
         if (boost::starts_with(line, "@@")) {
@@ -79,22 +87,22 @@ void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const ConfigDb& config)
             std::string lineNumStr = *tokLineNum.begin();
             size_t lineNum = boost::lexical_cast<size_t>(lineNumStr);
             std::cout   << "Found new Parag begin at line " << lineNum << endl; 
-            _file.addParagDiff(lineNum);
+            _fileDb.addParagDiff(lineNum);
             continue;
         }
 
         if (boost::starts_with(line, "-")) {
-            _file.addLineDiff(line, FileDb::DiffLineType::MINUS);
+            _fileDb.addLineDiff(line, FileDb::DiffLineType::MINUS);
             continue;
         }
 
         if (boost::starts_with(line, "+")) {
-            _file.addLineDiff(line, FileDb::DiffLineType::PLUS);
+            _fileDb.addLineDiff(line, FileDb::DiffLineType::PLUS);
             continue;
         }
 
         if (boost::starts_with(line, " ")) {
-            _file.addLineDiff(line, FileDb::DiffLineType::NOCHANGE);
+            _fileDb.addLineDiff(line, FileDb::DiffLineType::NOCHANGE);
             continue;
         }
         // diff file type unrecognized 
