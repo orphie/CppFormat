@@ -5,9 +5,30 @@
 #include <boost/lexical_cast.hpp>
 #include "libFile/public/FileAnalyzer.hh"
 #include "libFile/public/FileDb.hh"
+#include "libFile/public/DiffFileDb.hh"
 #include "libConfig/public/ConfigDb.hh"
 #include "libUtils/public/Timer.hh"
 using namespace std;
+
+void
+copyFile(const std::string& curFileName, const std::string& revertFileName) {
+    // create 
+    std::ifstream  src(curFileName, std::ios::binary);
+    std::ofstream  dst(revertFileName, std::ios::binary);
+    dst << src.rdbuf();
+}
+
+static std::pair<size_t, size_t> 
+getNumLeadingSpaceAndTab(const std::string& line) 
+{
+    std::pair<size_t, size_t> ret{0,0};
+    for (auto c : line) {
+        if (c == ' ')   ++ret.first;
+        else if (c == '\t')  ++ret.second;
+        else break;
+    }
+    return ret;
+}
 
 class FileAnalyzer::FileAnalyzerImpl {
 public:
@@ -19,7 +40,10 @@ private:
     void processDiffFile(const ConfigDb&);
     void analyzeDiffFile(const std::string&);
     void revertPatch();
-    void analyzeSrcFiles(const ConfigDb&);
+    void revertPatch(const FileDiff&);
+    void revertPatch(const ParagDiff&, ofstream& ofile, ifstream&, size_t&);
+    void processSrcFiles(const ConfigDb&);
+    void processSrcFile(const std::string&);
 private:
     FileDb&     _fileDb;
 };
@@ -27,18 +51,100 @@ private:
 void FileAnalyzer::FileAnalyzerImpl::run(const ConfigDb& config)
 {
     processDiffFile(config);
-    analyzeSrcFiles(config);
+    processSrcFiles(config);
 }
 
 void FileAnalyzer::FileAnalyzerImpl::revertPatch()
 {
+    ScopeTimer timer("Revert Patch");
     // create a new file "*.revert"
-    //_fileDb
+    const auto& fileDiffs = _fileDb.getFileDiffs();
+    for (const auto& fileDiff : fileDiffs) {
+        revertPatch(fileDiff);
+    }
 }
 
-void FileAnalyzer::FileAnalyzerImpl::analyzeSrcFiles(const ConfigDb& config)
-{}
+void FileAnalyzer::FileAnalyzerImpl::revertPatch(const ParagDiff& parag, ofstream& ofile, ifstream& ifile, size_t& curLineNum)
+{
+    for (const auto line : parag.getLines()) {
+        if (line.getType() == FileDb::DiffLineType::MINUS) {
+            std::string lineRecorded = line.getLineStr();
+            ofile << lineRecorded << "\n";
+        } else {
+            ++curLineNum;
+            std::string lineInFile("");
+            std::getline(ifile, lineInFile);
+            std::string lineRecorded = line.getLineStr();
+            assert(lineInFile == lineRecorded);
+            if (line.getType() == FileDb::DiffLineType::NOCHANGE) {
+                ofile << lineInFile << "\n";
+            }
+        }
+    }
+}
 
+void FileAnalyzer::FileAnalyzerImpl::revertPatch(const FileDiff& fileDiff)
+{
+    const std::string& curFileName = fileDiff.getFileName();
+    std::string revertFileName = curFileName + ".revert";
+
+    std::ifstream  ifile(curFileName, std::ios::binary);
+    std::ofstream  ofile(revertFileName, std::ios::binary);
+
+    size_t curLineNum = 1;
+    for (const auto& parag : fileDiff.getParags()) {
+        while (curLineNum < parag.getStartLineNum()) {
+            std::string line("");
+            std::getline(ifile, line);
+            ofile << line << "\n";
+            ++curLineNum;
+        }
+        revertPatch(parag, ofile, ifile, curLineNum);
+    }
+
+    for (std::string line(""); std::getline(ifile, line); ) {
+        ofile << line << "\n";
+        ++curLineNum;
+    }
+}
+
+
+//void FileAnalyzer::FileAnalyzerImpl::processSrcLine(const std::string& inputFileName)
+//{
+//}
+
+void FileAnalyzer::FileAnalyzerImpl::processSrcFile(const std::string& inputFileName)
+{
+    ifstream infile(inputFileName);
+    size_t lineNum = 0;
+    //InputFile src(diffFileName);
+    for (std::string line(""); std::getline(infile, line); ) {
+        //processSrcLine(src, line, lineNum);
+        ++lineNum;
+        if (line.empty()) {
+            continue;
+        }
+
+        auto leadingSpaceAndTab = getNumLeadingSpaceAndTab(line);
+        std::cout   << "Line " << lineNum << ": " << leadingSpaceAndTab.first 
+                    << " " << leadingSpaceAndTab.second << endl;
+        if (leadingSpaceAndTab.first != 0 && leadingSpaceAndTab.second != 0) {
+            cout << "Mix use of Space and Tab: \n\t" << line << endl;
+        }
+        //if 
+    }
+}
+
+void FileAnalyzer::FileAnalyzerImpl::processSrcFiles(const ConfigDb& config)
+{
+    if (!config.hasInputFile()) {
+        return;
+    }
+    auto inputFileNames = config.getInputFileNames();
+    for (const auto& inputFileName : inputFileNames) {
+        processSrcFile(inputFileName);
+    }
+}
 
 void FileAnalyzer::FileAnalyzerImpl::processDiffFile(const ConfigDb& config)
 {
@@ -55,7 +161,6 @@ void FileAnalyzer::FileAnalyzerImpl::processDiffFile(const ConfigDb& config)
 void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const std::string& diffFileName)
 {
     ifstream infile(diffFileName);
-
     using separator = boost::char_separator<char>;
     using tokenizer = boost::tokenizer<boost::char_separator<char>>;
     for (std::string line(""); std::getline(infile, line); ) {
@@ -78,8 +183,8 @@ void FileAnalyzer::FileAnalyzerImpl::analyzeDiffFile(const std::string& diffFile
         if (boost::starts_with(line, "@@")) {
             separator sep{" "};
             tokenizer tok{line, sep};
-            std::string newLineNum = *(++tok.begin());
-            assert(newLineNum[0] == '-');
+            std::string newLineNum = *(++(++tok.begin()));
+            assert(newLineNum[0] == '+');
             newLineNum = newLineNum.substr(1);
             
             separator sepLineNum{","};

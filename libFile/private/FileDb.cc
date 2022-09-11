@@ -1,7 +1,7 @@
 #include <iostream>
 #include "libFile/public/FileDb.hh"
 #include "libConfig/public/ConfigDb.hh"
-#include "libFile/private/DiffFileDb.hh"
+#include "libFile/public/DiffFileDb.hh"
 
 using namespace std;
 
@@ -22,6 +22,10 @@ public:
     }
     void addLineDiff(const std::string& line, DiffLineType type) {
         _diffFileDb.addLineDiff(line, type);
+    }
+    const std::vector<FileDiff>& getFileDiffs()  const
+    {
+        return _diffFileDb.getFileDiffs();
     }
 private:
     DiffFileDb _diffFileDb;
@@ -57,4 +61,10 @@ void
 FileDb::addLineDiff(const std::string& line, FileDb::DiffLineType type)
 {
     _pImpl->addLineDiff(line, type);
+}
+
+const std::vector<FileDiff>& 
+FileDb::getFileDiffs()  const
+{
+    return _pImpl->getFileDiffs();
 }
