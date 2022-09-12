@@ -5,6 +5,7 @@
 
 class Config;
 class FileDiff;
+class SrcFile;
 class FileDb {
 public:
     FileDb();
@@ -15,12 +16,15 @@ public:
         PLUS,
         NOCHANGE
     };
-public:
+public: // for diff file
     void addFileDiffMinus(const std::string&);
     void addFileDiffPlus(const std::string&);
     void addParagDiff(size_t);
     void addLineDiff(const std::string&, DiffLineType);
-    const std::vector<FileDiff>& getFileDiffs() const;
+    std::vector<FileDiff>& getFileDiffs();
+public: // for src file
+    void addSrcFile(SrcFile& file);
+    
 private:
     class FileDbImpl;
     std::unique_ptr<FileDbImpl> _pImpl;

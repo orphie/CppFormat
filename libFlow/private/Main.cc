@@ -22,18 +22,18 @@ int main(int argc, char* argv[])
 
     FileDb file;
     {
-        ScopeTimer timer("Analyze Input File");
+        ScopeTimer timer("Analyze Input Files");
         FileAnalyzer(file).run(config);
     }
 
     RuleDb rule;
     {
-        ScopeTimer timer("Extract Rules");
+        ScopeTimer timer("Extract Formatting Rules");
         RuleAnalyzer(rule).run(config, file);
     }
 
     {
-        ScopeTimer timer("Apply Rules On Files");
+        ScopeTimer timer("Apply Rules On Input Files");
         Format(config, rule, file).run();
     }
 

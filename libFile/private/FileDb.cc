@@ -23,7 +23,7 @@ public:
     void addLineDiff(const std::string& line, DiffLineType type) {
         _diffFileDb.addLineDiff(line, type);
     }
-    const std::vector<FileDiff>& getFileDiffs()  const
+    std::vector<FileDiff>& getFileDiffs()
     {
         return _diffFileDb.getFileDiffs();
     }
@@ -63,8 +63,8 @@ FileDb::addLineDiff(const std::string& line, FileDb::DiffLineType type)
     _pImpl->addLineDiff(line, type);
 }
 
-const std::vector<FileDiff>& 
-FileDb::getFileDiffs()  const
+std::vector<FileDiff>& 
+FileDb::getFileDiffs()
 {
     return _pImpl->getFileDiffs();
 }

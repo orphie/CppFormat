@@ -37,6 +37,7 @@ LIBRULEOBJ      =       $(OBJDIR)/RuleDb.o \
 LIBFILEOBJ      =       $(OBJDIR)/FileDb.o \
                         $(OBJDIR)/FileAnalyzer.o    \
                         $(OBJDIR)/DiffFileDb.o    \
+                        $(OBJDIR)/SrcFileDb.o    \
 
 
 LIBFORMATOBJ    =       $(OBJDIR)/Format.o \
@@ -79,6 +80,9 @@ $(OBJDIR)/FileDb.o : mkobjdir libFile/private/FileDb.cc libFile/public/FileDb.hh
 
 $(OBJDIR)/DiffFileDb.o : mkobjdir libFile/private/DiffFileDb.cc libFile/public/DiffFileDb.hh
 	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/DiffFileDb.o libFile/private/DiffFileDb.cc
+
+$(OBJDIR)/SrcFileDb.o : mkobjdir libFile/private/SrcFileDb.cc libFile/public/SrcFileDb.hh
+	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/SrcFileDb.o libFile/private/SrcFileDb.cc
 
 $(OBJDIR)/FileAnalyzer.o : mkobjdir libFile/private/FileAnalyzer.cc   libFile/public/FileAnalyzer.hh
 	$(CXX) $(CXXFLAGS) -c -o ${OBJDIR}/FileAnalyzer.o libFile/private/FileAnalyzer.cc

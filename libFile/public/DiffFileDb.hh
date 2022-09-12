@@ -3,6 +3,7 @@
 #include <string> 
 #include <vector> 
 #include "libFile/public/FileDb.hh"
+#include "libFile/public/SrcFileDb.hh"
 
 class LineDiff {
 public:
@@ -67,9 +68,20 @@ public:
 
     const std::string& getFileName()  const {return _newFileName;}
     const ParagDiffs   getParags()    const {return _parags;}
+
+    //void setOriginalFileLines(std::vector<std::string>& olines) const {
+    //    _origFileLines.swap(olines);
+    //}
+
+    SrcFile& getSrcFile() {
+        return _srcFile;
+    }
+
 private:
     std::string _origFileName;
     std::string _newFileName;
+    //std::vector<std::string> _origFileLines;
+    SrcFile     _srcFile;
     ParagDiffs  _parags;
 };
 
@@ -83,7 +95,7 @@ public:
     void addFileDiffPlus(const std::string&);
     void addParagDiff(size_t);
     void addLineDiff(const std::string&, FileDb::DiffLineType);
-    const std::vector<FileDiff>& getFileDiffs()  const;
+    std::vector<FileDiff>& getFileDiffs();
 private:
     class DiffFileDbImpl;
     std::unique_ptr<DiffFileDbImpl> _pImpl;
